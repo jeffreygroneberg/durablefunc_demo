@@ -2,221 +2,16 @@
 
 Azure **Durable Functions** is an extension of Azure Functions that enables the creation of **stateful workflows** in a serverless compute environment[1](https://www.mytechramblings.com/posts/building-an-async-http-api-with-durable-functions-and-python/). Using Durable Functions, developers can **orchestrate** multiple functions (activities) with reliable state management, making it ideal for long-running and complex workflows. This report provides a detailed overview of Durable Functions in Python, compares the **v1** and **v2** Python programming models, and highlights best practices (including the use of **async** and **yield**) with examples and case studies. The goal is to offer a comprehensive guide that can be handed to a customer for implementing durable, efficient, and maintainable serverless workflows in Python.
 
-<!-- Copilot-Researcher-Visualization -->
-```html
-<style>
-    :root {
-        --accent: #464feb;
-        --bg-card: #f5f7fa;
-        --bg-hover: #ebefff;
-        --text-title: #424242;
-        --text-accent: var(--accent);
-        --text-sub: #424242;
-        --radius: 12px;
-        --border: #e0e0e0;
-        --shadow: 0 2px 10px rgba(0, 0, 0, 0.06);
-        --hover-shadow: 0 4px 14px rgba(39, 16, 16, 0.1);
-        --font: "Segoe UI";
-    }
+## 📋 Quick Reference
 
-    @media (prefers-color-scheme: dark) {
-        :root {
-            --accent: #7385FF;
-            --bg-card: #1e1e1e;
-            --bg-hover: #2a2a2a;
-            --text-title: #ffffff;
-            --text-sub: #ffffff;
-            --shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
-            --hover-shadow: 0 4px 14px rgba(0, 0, 0, 0.5);
-            --border: #e0e0e0;
-        }
-    }
+> ### What Are Durable Functions?
+> An Azure Functions extension for writing **stateful workflows** (orchestrations) in code, enabling long-running, reliable serverless processes.
 
-    @media (prefers-contrast: more),
-    (forced-colors: active) {
-        :root {
-            --accent: ActiveText;
-            --bg-card: Canvas;
-            --bg-hover: Canvas;
-            --text-title: CanvasText;
-            --text-sub: CanvasText;
-            --shadow: 0 2px 10px Canvas;
-            --hover-shadow: 0 4px 14px Canvas;
-            --border: ButtonBorder;
-        }
-    }
+> ### Python Durable Functions Models
+> **v1:** Uses configuration files (function.json) + code files per function. **v2:** Uses decorators & Pythonic code structure (no function.json), introduced for easier development.
 
-    .insights-container {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 1rem;
-        margin: 2rem 0;
-        font-family: var(--font);
-    }
-
-    .insight-card {
-        background-color: var(--bg-card);
-        border-radius: var(--radius);
-        box-shadow: var(--shadow);
-        flex: 1 1 240px;
-        min-width: 220px;
-        padding: 1.2rem;
-        transition: transform 0.2s, box-shadow 0.2s;
-    }
-
-    .insight-card:hover {
-        background-color: var(--bg-hover);
-        box-shadow: var(--hover-shadow);
-    }
-
-    .insight-card h4 {
-        margin-bottom: 0.5rem;
-        margin-top: 0.5rem;
-        font-size: 1.1rem;
-        color: var(--text-accent);
-        font-weight: 600;
-        display: flex;
-        align-items: center;
-        gap: 0.4rem;
-    }
-
-    .insight-card .icon {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        width: 20px;
-        height: 20px;
-        font-size: 1.1rem;
-        color: var(--text-accent);
-    }
-
-    .insight-card p {
-        font-size: 0.92rem;
-        color: var(--text-sub);
-        line-height: 1.5;
-        margin: 0;
-    }
-
-    .metrics-container {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 1.5rem;
-        margin: 1.5rem 0;
-        font-family: var(--font);
-    }
-
-    .metric-card {
-        flex: 1 1 210px;
-        min-width: 200px;
-        padding: 1.2rem 1rem;
-        background-color: var(--bg-card);
-        border-radius: var(--radius);
-        box-shadow: var(--shadow);
-        text-align: center;
-        transition: transform 0.2s ease, box-shadow 0.2s ease;
-    }
-
-    .metric-card:hover {
-        background-color: var(--bg-hover);
-        box-shadow: var(--hover-shadow);
-    }
-
-    .metric-card h4 {
-        margin: 0 0 0.4rem;
-        font-size: 1rem;
-        color: var(--text-title);
-        font-weight: 600;
-    }
-
-    .metric-card .metric-card-value {
-        margin: 0.2rem 0;
-        font-size: 1.4rem;
-        font-weight: 600;
-        color: var(--text-accent);
-    }
-
-    .metric-card p {
-        font-size: 0.85rem;
-        color: var(--text-sub);
-        line-height: 1.45;
-        margin: 0;
-    }
-
-    .timeline-container {
-        position: relative;
-        margin: 2rem 0;
-        padding-left: 0;
-        list-style: none;
-        font-family: var(--font);
-    }
-
-    .timeline-container::before {
-        content: "";
-        position: absolute;
-        top: 0;
-        left: 1.25rem;
-        width: 2px;
-        height: 100%;
-        background: linear-gradient(to bottom, transparent 0%, var(--accent) 10%, var(--accent) 90%, transparent 100%);
-    }
-
-    .timeline-container li {
-        position: relative;
-        margin: 0 0 2.2rem 2.5rem;
-        padding: 0.8rem 1rem;
-        border-radius: var(--radius);
-        background: var(--bg-card);
-        box-shadow: var(--shadow);
-        transition: box-shadow 0.2s, transform 0.2s;
-    }
-
-    .timeline-container li:hover {
-        box-shadow: var(--hover-shadow);
-        background-color: var(--bg-hover);
-    }
-
-    .timeline-container li::before {
-        content: "";
-        position: absolute;
-        top: 0.9rem;
-        left: -1.23rem;
-        width: 12px;
-        height: 12px;
-        background: var(--accent);
-        border-radius: 50%;
-        transform: translateX(-50%);
-        box-shadow: var(--shadow);
-    }
-
-    .timeline-container li h4 {
-        margin: 0 0 0.3em;
-        font-size: 1rem;
-        font-weight: 600;
-        color: var(--accent);
-    }
-
-    .timeline-container li p {
-        margin: 0;
-        font-size: 0.9rem;
-        color: var(--text-sub);
-        line-height: 1.4;
-    }
-</style>
-<div class="insights-container">
-  <div class="insight-card">
-    <h4>What Are Durable Functions?</h4>
-    <p>An Azure Functions extension for writing <strong>stateful workflows</strong> (orchestrations) in code, enabling long-running, reliable serverless processes.</p>
-  </div>
-  <div class="insight-card">
-    <h4>Python Durable Functions Models</h4>
-    <p><strong>v1:</strong> Uses configuration files (function.json) + code files per function. <strong>v2:</strong> Uses decorators &amp; Pythonic code structure (no function.json), introduced for easier development.</p>
-  </div>
-  <div class="insight-card">
-    <h4>Key Workflow Roles</h4>
-    <p><strong>Client</strong> triggers orchestration, <strong>Orchestrator</strong> defines workflow, <strong>Activities</strong> perform tasks, <strong>Entities</strong> hold durable state.</p>
-  </div>
-</div>
-```
+> ### Key Workflow Roles
+> **Client** triggers orchestration, **Orchestrator** defines workflow, **Activities** perform tasks, **Entities** hold durable state.
 
 ## Overview of Azure Durable Functions (Python)
 
@@ -737,245 +532,34 @@ To summarize, **plan for backward compatibility** when updating durable workflow
 
 Bringing together all the insights, here is a summary checklist of **best practices** for building Durable Functions with Python (v1 or v2 model):
 
-<!-- Copilot-Researcher-Visualization -->
-```html
-<style>
-    :root {
-        --accent: #464feb;
-        --bg-card: #f5f7fa;
-        --bg-hover: #ebefff;
-        --text-title: #424242;
-        --text-accent: var(--accent);
-        --text-sub: #424242;
-        --radius: 12px;
-        --border: #e0e0e0;
-        --shadow: 0 2px 10px rgba(0, 0, 0, 0.06);
-        --hover-shadow: 0 4px 14px rgba(39, 16, 16, 0.1);
-        --font: "Segoe UI";
-    }
+## 🎯 Best Practices Summary
 
-    @media (prefers-color-scheme: dark) {
-        :root {
-            --accent: #7385FF;
-            --bg-card: #1e1e1e;
-            --bg-hover: #2a2a2a;
-            --text-title: #ffffff;
-            --text-sub: #ffffff;
-            --shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
-            --hover-shadow: 0 4px 14px rgba(0, 0, 0, 0.5);
-            --border: #e0e0e0;
-        }
-    }
+### ✅ Orchestrator Best Practices
+**Keep orchestrator functions deterministic and side-effect free.** No direct I/O, no random values, and no blocking calls in orchestrators. Use `yield` to call activities and let the framework handle state saving.
 
-    @media (prefers-contrast: more),
-    (forced-colors: active) {
-        :root {
-            --accent: ActiveText;
-            --bg-card: Canvas;
-            --bg-hover: Canvas;
-            --text-title: CanvasText;
-            --text-sub: CanvasText;
-            --shadow: 0 2px 10px Canvas;
-            --hover-shadow: 0 4px 14px Canvas;
-            --border: ButtonBorder;
-        }
-    }
+### ➡️ Use `yield`, not `await`
+**Define orchestrators as generator functions** and always yield durable operations. Never mark an orchestrator `async`. Reserve `async/await` for activity or HTTP trigger functions if needed, but orchestrators use `yield` to await results.
 
-    .insights-container {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 1rem;
-        margin: 2rem 0;
-        font-family: var(--font);
-    }
+### ⚙️ Activity Functions
+**Offload work to activities.** Any compute-intensive or I/O tasks should be in activity functions. Make activities *idempotent* where possible, as they might re-run on failures.
 
-    .insight-card {
-        background-color: var(--bg-card);
-        border-radius: var(--radius);
-        box-shadow: var(--shadow);
-        flex: 1 1 240px;
-        min-width: 220px;
-        padding: 1.2rem;
-        transition: transform 0.2s, box-shadow 0.2s;
-    }
+### 📦 Small Inputs & Outputs
+**Keep payloads lean.** Pass IDs or references to large data instead of the data itself through orchestration context. This avoids performance issues with large serialized state.
 
-    .insight-card:hover {
-        background-color: var(--bg-hover);
-        box-shadow: var(--hover-shadow);
-    }
+### ⚡ Parallelize & Throttle
+**Use parallel calls** (fan-out) when appropriate to speed up processing. But also be mindful of not spawning excessive parallel tasks that could overwhelm resources – batch or limit if needed.
 
-    .insight-card h4 {
-        margin-bottom: 0.5rem;
-        margin-top: 0.5rem;
-        font-size: 1.1rem;
-        color: var(--text-accent);
-        font-weight: 600;
-        display: flex;
-        align-items: center;
-        gap: 0.4rem;
-    }
+### 🛠 Error Handling
+**Handle exceptions** in the orchestrator with try/except and implement compensation for partial failures if needed. Use `call_activity_with_retry` for transient failures to automatically retry.
 
-    .insight-card .icon {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        width: 20px;
-        height: 20px;
-        font-size: 1.1rem;
-        color: var(--text-accent);
-    }
+### 💭 Monitor and Instrument
+**Monitor running workflows.** Use Application Insights and the Azure Durable Functions Monitor to trace orchestrations. Log important steps and IDs within your functions for debugging.
 
-    .insight-card p {
-        font-size: 0.92rem;
-        color: var(--text-sub);
-        line-height: 1.5;
-        margin: 0;
-    }
+### 🔒 Secure the Endpoints
+**Secure triggers & data.** Protect HTTP triggers with proper auth (avoid anonymous in production). Safeguard instance IDs and do not expose sensitive info in orchestration inputs/outputs.
 
-    .metrics-container {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 1.5rem;
-        margin: 1.5rem 0;
-        font-family: var(--font);
-    }
-
-    .metric-card {
-        flex: 1 1 210px;
-        min-width: 200px;
-        padding: 1.2rem 1rem;
-        background-color: var(--bg-card);
-        border-radius: var(--radius);
-        box-shadow: var(--shadow);
-        text-align: center;
-        transition: transform 0.2s ease, box-shadow 0.2s ease;
-    }
-
-    .metric-card:hover {
-        background-color: var(--bg-hover);
-        box-shadow: var(--hover-shadow);
-    }
-
-    .metric-card h4 {
-        margin: 0 0 0.4rem;
-        font-size: 1rem;
-        color: var(--text-title);
-        font-weight: 600;
-    }
-
-    .metric-card .metric-card-value {
-        margin: 0.2rem 0;
-        font-size: 1.4rem;
-        font-weight: 600;
-        color: var(--text-accent);
-    }
-
-    .metric-card p {
-        font-size: 0.85rem;
-        color: var(--text-sub);
-        line-height: 1.45;
-        margin: 0;
-    }
-
-    .timeline-container {
-        position: relative;
-        margin: 2rem 0;
-        padding-left: 0;
-        list-style: none;
-        font-family: var(--font);
-    }
-
-    .timeline-container::before {
-        content: "";
-        position: absolute;
-        top: 0;
-        left: 1.25rem;
-        width: 2px;
-        height: 100%;
-        background: linear-gradient(to bottom, transparent 0%, var(--accent) 10%, var(--accent) 90%, transparent 100%);
-    }
-
-    .timeline-container li {
-        position: relative;
-        margin: 0 0 2.2rem 2.5rem;
-        padding: 0.8rem 1rem;
-        border-radius: var(--radius);
-        background: var(--bg-card);
-        box-shadow: var(--shadow);
-        transition: box-shadow 0.2s, transform 0.2s;
-    }
-
-    .timeline-container li:hover {
-        box-shadow: var(--hover-shadow);
-        background-color: var(--bg-hover);
-    }
-
-    .timeline-container li::before {
-        content: "";
-        position: absolute;
-        top: 0.9rem;
-        left: -1.23rem;
-        width: 12px;
-        height: 12px;
-        background: var(--accent);
-        border-radius: 50%;
-        transform: translateX(-50%);
-        box-shadow: var(--shadow);
-    }
-
-    .timeline-container li h4 {
-        margin: 0 0 0.3em;
-        font-size: 1rem;
-        font-weight: 600;
-        color: var(--accent);
-    }
-
-    .timeline-container li p {
-        margin: 0;
-        font-size: 0.9rem;
-        color: var(--text-sub);
-        line-height: 1.4;
-    }
-</style>
-<div class="insights-container">
-  <div class="insight-card">
-    <h4>&#x2705; Orchestrator Best Practices</h4>
-    <p><strong>Keep orchestrator functions deterministic and side-effect free.</strong> No direct I/O, no random values, and no blocking calls in orchestrators. Use <code>yield</code> to call activities and let the framework handle state saving.</p>
-  </div>
-  <div class="insight-card">
-    <h4>&#x27A1; Use <code>yield</code>, not <code>await</code></h4>
-    <p><strong>Define orchestrators as generator functions</strong> and always yield durable operations. Never mark an orchestrator <code>async</code>. Reserve <code>async/await</code> for activity or HTTP trigger functions if needed, but orchestrators use <code>yield</code> to await results.</p>
-  </div>
-  <div class="insight-card">
-    <h4>&#x2699; Activity Functions</h4>
-    <p><strong>Offload work to activities.</strong> Any compute-intensive or I/O tasks should be in activity functions. Make activities <em>idempotent</em> where possible, as they might re-run on failures.</p>
-  </div>
-  <div class="insight-card">
-    <h4>&#x1F4E6; Small Inputs &amp; Outputs</h4>
-    <p><strong>Keep payloads lean.</strong> Pass IDs or references to large data instead of the data itself through orchestration context. This avoids performance issues with large serialized state.</p>
-  </div>
-  <div class="insight-card">
-    <h4>&#x26A1; Parallelize &amp; Throttle</h4>
-    <p><strong>Use parallel calls</strong> (fan-out) when appropriate to speed up processing. But also be mindful of not spawning excessive parallel tasks that could overwhelm resources – batch or limit if needed.</p>
-  </div>
-  <div class="insight-card">
-    <h4>&#x1F6E0; Error Handling</h4>
-    <p><strong>Handle exceptions</strong> in the orchestrator with try/except and implement compensation for partial failures if needed. Use <code>call_activity_with_retry</code> for transient failures to automatically retry.</p>
-  </div>
-  <div class="insight-card">
-    <h4>&#x1F4AD; Monitor and Instrument</h4>
-    <p><strong>Monitor running workflows.</strong> Use Application Insights and the Azure Durable Functions Monitor to trace orchestrations. Log important steps and IDs within your functions for debugging.</p>
-  </div>
-  <div class="insight-card">
-    <h4>&#x1F512; Secure the Endpoints</h4>
-    <p><strong>Secure triggers &amp; data.</strong> Protect HTTP triggers with proper auth (avoid anonymous in production). Safeguard instance IDs and do not expose sensitive info in orchestration inputs/outputs.</p>
-  </div>
-  <div class="insight-card">
-    <h4>&#x1F503; Plan for Updates</h4>
-    <p><strong>Version orchestrations carefully.</strong> If changing orchestrator logic, consider side-by-side versioning or new task hubs to avoid breaking in-flight instances. Update Durable Functions SDK to latest to benefit from fixes.</p>
-  </div>
-</div>
-```
+### 🔄 Plan for Updates
+**Version orchestrations carefully.** If changing orchestrator logic, consider side-by-side versioning or new task hubs to avoid breaking in-flight instances. Update Durable Functions SDK to latest to benefit from fixes.
 
 ---
 
