@@ -1,0 +1,16 @@
+{
+  "scriptFile": "app.py",
+  "bindings": [
+    {
+      "name": "timer",
+      "type": "timerTrigger",
+      "direction": "in",
+      "schedule": "*/10 * * * * *"
+    },
+    {
+      "name": "starter",
+      "type": "orchestrationClient",
+      "direction": "in" 
+    }
+  ]
+}
