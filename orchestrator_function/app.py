@@ -58,7 +58,7 @@ def orchestrator_function(context: df.DurableOrchestrationContext):
     tasks = []
     
     for chunk_id in range(int(total_chunks)):
-        logger.info(f"📤 ORCHESTRATOR FUNCTION: Queuing ProcessChunkActivity for chunk {chunk_id}")
+        logger.info(f"📤 ORCHESTRATOR FUNCTION: Queuing process_chunk_activity for chunk {chunk_id}")
         
         # Prepare chunk data - ensure all values are JSON serializable
         chunk_data = {
@@ -70,7 +70,7 @@ def orchestrator_function(context: df.DurableOrchestrationContext):
         }
         
         # ⭐ Create the task but DON'T yield yet - this allows parallel execution
-        task = context.call_activity("ProcessChunkActivity", chunk_data)
+        task = context.call_activity("process_chunk_activity", chunk_data)
         tasks.append(task)
     
     logger.info(f"🔀 ORCHESTRATOR FUNCTION: Fan-out complete! {len(tasks)} tasks queued for parallel execution")

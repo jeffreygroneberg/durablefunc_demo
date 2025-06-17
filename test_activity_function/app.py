@@ -25,11 +25,11 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         # Import and call the activity function
         import sys
         import os
-        sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'ProcessChunkActivity'))
+        sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'process_chunk_activity'))
         
-        from ProcessChunkActivity.app import main as activity_main
+        from process_chunk_activity.app import main as activity_main
         
-        logger.info("🔧 TEST ACTIVITY FUNCTION: Calling ProcessChunkActivity...")
+        logger.info("🔧 TEST ACTIVITY FUNCTION: Calling process_chunk_activity...")
         result = activity_main(test_input)
         
         logger.info(f"✅ TEST ACTIVITY FUNCTION: Activity result: {result}")
